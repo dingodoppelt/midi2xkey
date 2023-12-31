@@ -1,58 +1,76 @@
 #include <iostream>
 #include <jack/jack.h>
 #include <jack/midiport.h>
-#include <bitset>
 #include <cstdint>
+#include <bitset>
+#include <vector>
 
 jack_port_t *midi_input_port;
 
 // Struktur für MIDI-Nachrichten
 struct MidiMessage {
+    jack_midi_event_t rawEvent;
     uint8_t status;  // MIDI-Statusbyte
     uint8_t channel; // MIDI-Kanal (1-16)
     uint8_t data1;    // Erstes Datenbyte
     uint8_t data2;    // Zweites Datenbyte (nur für bestimmte Nachrichten)
+    std::string name = "unknown";
 
-    // Konstruktor für einfache Initialisierung
-    MidiMessage(uint8_t s, uint8_t c, uint8_t d1, uint8_t d2 = 0)
-        : status(s), channel(c), data1(d1), data2(d2) {}
+    // Konstruktor
+    MidiMessage(const jack_midi_event_t& event) {
+        rawEvent = event;
+        status = (event.buffer[0] & 0xF0) >> 4;
+        channel = (event.buffer[0] & 0x0F) + 1;
+        data1 = event.buffer[1];
+        data2 = event.buffer[2];
+        switch (status) {
+            case 0x8: // Note Off
+                name = "Note Off";
+                break;
+            case 0x9: // Note On
+                name = "Note On";
+                break;
+            case 0xA: // Polyphonic Aftertouch
+                name = "Polyphonic Aftertouch";
+                break;
+            case 0xB: // Control Change
+                name = "Control Change";
+                break;
+            case 0xE: // Pitch Bend
+                name = "Pitch Bend";
+                break;
+            case 0xC: // Program Change
+                name = "Program Change";
+                break;
+            case 0xD: // Channel Aftertouch
+                name = "Channel Aftertouch";
+                break;
+            // Weitere MIDI-Statusbyte-Fälle können hier hinzugefügt werden
+        }
+    }
 
     // Funktion zum Ausgeben der MIDI-Nachricht
     void print() const {
-        std::cout << "Status: " << std::hex << static_cast<int>(status)
+        printBinaryData();
+        std::cout << "Status: " << static_cast<int>(status)
                   << ", Channel: " << static_cast<int>(channel)
                   << ", Data1: " << static_cast<int>(data1)
-                  << ", Data2: " << static_cast<int>(data2) << std::dec << std::endl;
+                  << ", Data2: " << static_cast<int>(data2)
+                  << ", Name: " << name << std::endl;
+    }
+
+private:
+    void printBinaryData() const {
+        std::cout << "Binärdaten: ";
+        for (uint8_t i = 0; i < rawEvent.size; i++) {
+            for (int j = 7; j >= 0; --j) {
+                std::cout << ((rawEvent.buffer[i] >> j) & 1);
+            }
+            std::cout << " ";
+        }
+        std::cout << std::endl;
     }
 };
-
-// Funktion zum Parsen von MIDI-Ereignissen
-MidiMessage parseMidiEvent(const jack_midi_event_t& event) {
-    MidiMessage midiMessage(0, 0, 0, 0);
-
-    // Extrahiere Statusbyte und Kanal
-    midiMessage.status = event.buffer[0];
-    midiMessage.channel = (midiMessage.status & 0x0F) + 1;
-
-    // Extrahiere Datenbytes (abhängig vom MIDI-Statusbyte)
-    switch ((midiMessage.status & 0xF0) >> 4) {
-        case 8: // Note Off
-        case 9: // Note On
-        case 0xA: // Polyphonic Aftertouch
-        case 0xB: // Control Change
-        case 0xE: // Pitch Bend
-            midiMessage.data1 = event.buffer[1];
-            midiMessage.data2 = event.buffer[2];
-            break;
-        case 0xC: // Program Change
-        case 0xD: // Channel Aftertouch
-            midiMessage.data1 = event.buffer[1];
-            break;
-        // Weitere MIDI-Statusbyte-Fälle können hier hinzugefügt werden
-    }
-
-    return midiMessage;
-}
 
 int process(jack_nframes_t nframes, void *arg) {
     jack_midi_event_t event;
@@ -63,7 +81,7 @@ int process(jack_nframes_t nframes, void *arg) {
         jack_midi_event_get(&event, midi_input_buffer, i);
 
         // Parsen und Ausgeben der MIDI-Nachricht
-        MidiMessage midiMessage = parseMidiEvent(event);
+        MidiMessage midiMessage(event);
         midiMessage.print();
     }
 
@@ -72,7 +90,7 @@ int process(jack_nframes_t nframes, void *arg) {
 
 int main() {
     jack_client_t *client;
-    const char *client_name = "mein-midi-client";
+    const char *client_name = "midi2key";
 
     client = jack_client_open(client_name, JackNullOption, NULL);
     if (client == NULL) {
