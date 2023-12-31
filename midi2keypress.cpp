@@ -4,73 +4,49 @@
 #include <cstdint>
 #include <bitset>
 #include <vector>
+#include <map>
+#include <fstream>
+#include <nlohmann/json.hpp>
 
 jack_port_t *midi_input_port;
 
 // Struktur für MIDI-Nachrichten
 struct MidiMessage {
     jack_midi_event_t rawEvent;
-    uint8_t status;  // MIDI-Statusbyte
-    uint8_t channel; // MIDI-Kanal (1-16)
-    uint8_t data1;    // Erstes Datenbyte
-    uint8_t data2;    // Zweites Datenbyte (nur für bestimmte Nachrichten)
-    std::string name = "unknown";
 
     // Konstruktor
     MidiMessage(const jack_midi_event_t& event) {
         rawEvent = event;
-        status = (event.buffer[0] & 0xF0) >> 4;
-        channel = (event.buffer[0] & 0x0F) + 1;
-        data1 = event.buffer[1];
-        data2 = event.buffer[2];
-        switch (status) {
-            case 0x8: // Note Off
-                name = "Note Off";
-                break;
-            case 0x9: // Note On
-                name = "Note On";
-                break;
-            case 0xA: // Polyphonic Aftertouch
-                name = "Polyphonic Aftertouch";
-                break;
-            case 0xB: // Control Change
-                name = "Control Change";
-                break;
-            case 0xE: // Pitch Bend
-                name = "Pitch Bend";
-                break;
-            case 0xC: // Program Change
-                name = "Program Change";
-                break;
-            case 0xD: // Channel Aftertouch
-                name = "Channel Aftertouch";
-                break;
-            // Weitere MIDI-Statusbyte-Fälle können hier hinzugefügt werden
-        }
-    }
-
-    // Funktion zum Ausgeben der MIDI-Nachricht
-    void print() const {
-        printBinaryData();
-        std::cout << "Status: " << static_cast<int>(status)
-                  << ", Channel: " << static_cast<int>(channel)
-                  << ", Data1: " << static_cast<int>(data1)
-                  << ", Data2: " << static_cast<int>(data2)
-                  << ", Name: " << name << std::endl;
-    }
-
-private:
-    void printBinaryData() const {
-        std::cout << "Binärdaten: ";
-        for (uint8_t i = 0; i < rawEvent.size; i++) {
-            for (int j = 7; j >= 0; --j) {
-                std::cout << ((rawEvent.buffer[i] >> j) & 1);
-            }
-            std::cout << " ";
-        }
-        std::cout << std::endl;
     }
 };
+
+// Global map to associate MIDI events with a vector of strings
+std::map<std::vector<jack_midi_data_t>, std::vector<std::string>> midiEventMap;
+
+// Function to load MIDI mappings from a JSON file
+void loadMidiMappings(const std::string& jsonFile) {
+    std::ifstream conf(jsonFile);
+    if (!conf.is_open()) {
+        std::cerr << "Error opening JSON file: " << jsonFile << std::endl;
+        return;
+    }
+
+    nlohmann::json data;
+    conf >> data;
+
+    auto messageMapJson = data.at("message_map");
+    for (const auto& entry : messageMapJson) {
+        const auto& midiEvent = entry[0].get<std::vector<int>>();
+        const auto& names = entry[1].get<std::vector<std::string>>();
+
+        std::vector<jack_midi_data_t> midiEventBytes;
+        for (int byte : midiEvent) {
+            midiEventBytes.push_back(static_cast<jack_midi_data_t>(byte));
+        }
+
+        midiEventMap[midiEventBytes] = names;
+    }
+}
 
 int process(jack_nframes_t nframes, void *arg) {
     jack_midi_event_t event;
@@ -80,16 +56,27 @@ int process(jack_nframes_t nframes, void *arg) {
     for (jack_nframes_t i = 0; i < event_count; ++i) {
         jack_midi_event_get(&event, midi_input_buffer, i);
 
-        // Parsen und Ausgeben der MIDI-Nachricht
-        MidiMessage midiMessage(event);
-        midiMessage.print();
+        // Use the entire raw MIDI message buffer as the key for the map
+        std::vector<jack_midi_data_t> key(event.buffer, event.buffer + event.size);
+
+        // Look up MIDI event in the map
+        auto mapIter = midiEventMap.find(key);
+        if (mapIter != midiEventMap.end()) {
+            // Process associated strings
+            const std::vector<std::string>& names = mapIter->second;
+            for (const auto& name : names) {
+                std::cout << "Mapped Event: " << name << std::endl;
+            }
+        }
     }
 
     return 0;
 }
 
 int main() {
-    jack_client_t *client;
+    // Load MIDI mappings from JSON file
+    loadMidiMappings("config.json");
+        jack_client_t *client;
     const char *client_name = "midi2key";
 
     client = jack_client_open(client_name, JackNullOption, NULL);
