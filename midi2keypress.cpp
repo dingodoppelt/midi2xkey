@@ -78,7 +78,7 @@ int process(jack_nframes_t nframes, void *arg) {
 int main() {
     // Load MIDI mappings from JSON file
     loadMidiMappings("config.json");
-        jack_client_t *client;
+    jack_client_t *client;
     const char *client_name = "midi2key";
 
     client = jack_client_open(client_name, JackNullOption, NULL);
