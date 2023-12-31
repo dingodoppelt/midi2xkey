@@ -2,7 +2,6 @@
 #include <jack/jack.h>
 #include <jack/midiport.h>
 #include <cstdint>
-#include <bitset>
 #include <vector>
 #include <map>
 #include <fstream>
