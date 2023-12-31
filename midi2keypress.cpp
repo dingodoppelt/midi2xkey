@@ -10,15 +10,16 @@
 
 jack_port_t *midi_input_port;
 
-// Struktur für MIDI-Nachrichten
-struct MidiMessage {
-    jack_midi_event_t rawEvent;
-
-    // Konstruktor
-    MidiMessage(const jack_midi_event_t& event) {
-        rawEvent = event;
+void printBinaryData(jack_midi_event_t rawEvent) {
+    std::cout << "raw MIDI: ";
+    for (uint8_t i = 0; i < rawEvent.size; i++) {
+        for (int j = 7; j >= 0; --j) {
+            std::cout << ((rawEvent.buffer[i] >> j) & 1);
+        }
+        std::cout << " ";
     }
-};
+    std::cout << std::endl;
+}
 
 // Global map to associate MIDI events with a vector of strings
 std::map<std::vector<jack_midi_data_t>, std::vector<std::string>> midiEventMap;
@@ -55,6 +56,8 @@ int process(jack_nframes_t nframes, void *arg) {
 
     for (jack_nframes_t i = 0; i < event_count; ++i) {
         jack_midi_event_get(&event, midi_input_buffer, i);
+
+        printBinaryData(event);
 
         // Use the entire raw MIDI message buffer as the key for the map
         std::vector<jack_midi_data_t> key(event.buffer, event.buffer + event.size);
