@@ -86,8 +86,8 @@ int process(jack_nframes_t nframes, void *arg) {
 
         printBinaryData(event);
 
-        // Use the entire raw MIDI message buffer as the key for the map
-        std::vector<jack_midi_data_t> key(event.buffer, event.buffer + event.size);
+        // Use the first two bytes of the raw MIDI message buffer as the key for the map
+        std::vector<jack_midi_data_t> key(event.buffer, event.buffer + 2);
 
         // Look up MIDI event in the map
         auto mapIter = midiEventMap.find(key);
