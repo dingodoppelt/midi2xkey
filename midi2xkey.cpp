@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <fstream>
+#include <filesystem>
 #include <nlohmann/json.hpp>
 #include <xdo.h>
 
@@ -52,11 +53,11 @@ void printBinaryData(jack_midi_event_t rawEvent) {
 std::map<std::vector<jack_midi_data_t>, std::vector<std::string>> midiEventMap;
 
 // Function to load MIDI mappings from a JSON file
-void loadMidiMappings(const std::string& jsonFile) {
+bool loadMidiMappings(const std::string& jsonFile) {
     std::ifstream conf(jsonFile);
     if (!conf.is_open()) {
         std::cerr << "Error opening JSON file: " << jsonFile << std::endl;
-        return;
+        return false;
     }
 
     nlohmann::json data;
@@ -74,6 +75,7 @@ void loadMidiMappings(const std::string& jsonFile) {
 
         midiEventMap[midiEventBytes] = keys;
     }
+    return true;
 }
 
 int process(jack_nframes_t nframes, void *arg) {
@@ -127,9 +129,14 @@ int process(jack_nframes_t nframes, void *arg) {
     return 0;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    std::string configFile("config.json");
+    if (argc > 1 && std::filesystem::exists(argv[1])) {
+        configFile = argv[1];
+    }
+    std::cout << "Using config file path: " << configFile << std::endl;
     // Load MIDI mappings from JSON file
-    loadMidiMappings("config.json");
+    if (!loadMidiMappings(configFile)) return 1;
     jack_client_t *client;
     const char *client_name = "midi2key";
 
