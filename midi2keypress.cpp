@@ -6,8 +6,36 @@
 #include <map>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <xdo.h>
 
 jack_port_t *midi_input_port;
+
+class Xdo
+{
+public:
+	Xdo()
+	{
+		context = xdo_new(NULL);
+	}
+	~Xdo()
+	{
+		xdo_free(context);
+	}
+	void send_key_down(std::string const & sequence, useconds_t delay = 12000)
+	{
+		xdo_send_keysequence_window_down(context, CURRENTWINDOW, sequence.c_str(), delay);
+	}
+	void send_key_up(std::string const & sequence, useconds_t delay = 12000)
+	{
+		xdo_send_keysequence_window_up(context, CURRENTWINDOW, sequence.c_str(), delay);
+	}
+	void send_key(std::string const & sequence, useconds_t delay = 12000)
+	{
+		xdo_send_keysequence_window(context, CURRENTWINDOW, sequence.c_str(), delay);
+	}
+private:
+	xdo_t* context;
+} xdomain;
 
 void printBinaryData(jack_midi_event_t rawEvent) {
     std::cout << "raw MIDI: ";
@@ -67,7 +95,31 @@ int process(jack_nframes_t nframes, void *arg) {
             // Process associated strings
             const std::vector<std::string>& names = mapIter->second;
             for (const auto& name : names) {
-                std::cout << "Mapped Event: " << name << std::endl;
+                switch (key[0] >> 4) {
+                    case 0x8: // noteoff = keyup
+                        xdomain.send_key_up(name);
+                        break;
+                    case 0x9: // noteon = keydown for velocity > 0, else keyup
+                        key[2] > 0 ? xdomain.send_key_down(name) : xdomain.send_key_up(name);
+                        break;
+                    case 0xB: // control change = keydown for vel 127, keyup for vel 0, ignore the rest
+                        switch (key[2]) {
+                            case 0:
+                                xdomain.send_key_up(name);
+                                break;
+                            case 127:
+                                xdomain.send_key_down(name);
+                                break;
+                        }
+                        break;
+                    case 0xC: // program change = keypress
+                        xdomain.send_key(name);
+                        break;
+                    default:
+                        std::cout << "only note on, note off, control change and program change are handled... ignoring key" << std::endl;
+                        break;
+                }
+                std::cout << "Mapped Key: " << name << std::endl;
             }
         }
     }
