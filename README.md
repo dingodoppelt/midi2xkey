@@ -15,8 +15,8 @@ make
 ```
 
 ## Configuring
-A json file is provided for mapping MIDI events to keystrokes or key sequences.
-The MIDI events consist of either 3 or 2 bytes of data depending on the type of the event.
+A json file is provided for mapping MIDI events to keystrokes or key sequences.  
+The MIDI events consist of either 3 or 2 bytes of data depending on the type of the event.  
 This tool handles the following MIDI messages:
 - **note on** (sends a keydown event so you can hold the key for velocity > 0)
 - **note off** (sends a keyup event so you can release a key)
@@ -31,10 +31,10 @@ Say you wanted to map a **Note On/Note Off event** for **note number 60** on **M
 **Don't forget to add the second line to release the keys on note off!**
 
 explanation:
-`145` = Decimal value representing a MIDI note on event (1001) on channel 2 (0001). (Binary: 1001 0001)
-`60`  = Decimal value of the MIDI note number you want to map to a key
-`["V", "K"]` = the key(s), key combination(s) or key sequence(s) to be sent.
-See a [list of keycodes](https://gitlab.com/nokun/gestures/-/wikis/xdotool-list-of-key-codes)
+`145` = Decimal value representing a MIDI note on event (1001) on channel 2 (0001). (Binary: 1001 0001)  
+`60`  = Decimal value of the MIDI note number you want to map to a key  
+`["V", "K"]` = the key(s), key combination(s) or key sequence(s) to be sent.  
+See a [list of keycodes](https://gitlab.com/nokun/gestures/-/wikis/xdotool-list-of-key-codes)  
 See [summary of MIDI messages](https://www.midi.org/specifications-old/item/table-1-summary-of-midi-message) for detailed information on how to construct your MIDI message.
 
 
