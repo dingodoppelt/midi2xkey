@@ -15,7 +15,9 @@ make
 ```
 
 ## Configuring
-A json file is provided for mapping MIDI events to keystrokes or key sequences.  
+A json file is used for mapping MIDI events to keystrokes or key sequences.  
+The `config.json`file shouldn't be renamed or deleted to keep it as a default fallback.  
+If you want different custom mappings to choose from you can create new config files and pass one filepath as the first and only argument to the executable.  
 The MIDI events consist of either 3 or 2 bytes of data depending on the type of the event.  
 This tool handles the following MIDI messages:
 - **note on** (sends a keydown event so you can hold the key for velocity > 0)
