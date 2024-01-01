@@ -18,10 +18,10 @@ make
 A json file is provided for mapping MIDI events to keystrokes or key sequences.
 The MIDI events consist of either 3 or 2 bytes of data depending on the type of the event.
 This tool handles the following MIDI messages:
-- **note on** (sends a keydown event so you can hold the key for velocity = 127)
+- **note on** (sends a keydown event so you can hold the key for velocity > 0)
 - **note off** (sends a keyup event so you can release a key)
 - **control change** (sends keyup/keydown events depending on the value stored in data byte 3, 127 = keydown, 0 = keyup)
-- **program change** (sends a single keypress on every program change event and ignores the value byte)
+- **program change** (sends a single keypress on every program change event)
 
 Say you wanted to map a **Note On/Note Off event** for **note number 60** on **MIDI channel 2** to the **keys "V" and "K"** you'd add this to the `message_map`:
 ```
