@@ -100,10 +100,10 @@ int process(jack_nframes_t nframes, void *arg) {
                         xdomain.send_key_up(name);
                         break;
                     case 0x9: // noteon = keydown for velocity > 0, else keyup
-                        key[2] > 0 ? xdomain.send_key_down(name) : xdomain.send_key_up(name);
+                        event.buffer[2] > 0 ? xdomain.send_key_down(name) : xdomain.send_key_up(name);
                         break;
                     case 0xB: // control change = keydown for vel 127, keyup for vel 0, ignore the rest
-                        switch (key[2]) {
+                        switch (event.buffer[2]) {
                             case 0:
                                 xdomain.send_key_up(name);
                                 break;
