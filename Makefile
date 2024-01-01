@@ -1,11 +1,11 @@
-# Makefile für midi2keypress.cpp
+# Makefile für midi2xkey.cpp
 
 CC = g++                   # Der Compiler
 CFLAGS = -Wall -std=c++11  # Compiler-Flags
 LDFLAGS = $(shell pkg-config --cflags --libs libpipewire-0.3) -ljack -lxdo -lstdc++
 
 # Name der ausführbaren Datei
-TARGET = midi2keypress
+TARGET = midi2xkey
 
 all: $(TARGET)
 
