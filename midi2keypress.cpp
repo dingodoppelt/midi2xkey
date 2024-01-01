@@ -37,14 +37,14 @@ void loadMidiMappings(const std::string& jsonFile) {
     auto messageMapJson = data.at("message_map");
     for (const auto& entry : messageMapJson) {
         const auto& midiEvent = entry[0].get<std::vector<int>>();
-        const auto& names = entry[1].get<std::vector<std::string>>();
+        const auto& keys = entry[1].get<std::vector<std::string>>();
 
         std::vector<jack_midi_data_t> midiEventBytes;
         for (int byte : midiEvent) {
             midiEventBytes.push_back(static_cast<jack_midi_data_t>(byte));
         }
 
-        midiEventMap[midiEventBytes] = names;
+        midiEventMap[midiEventBytes] = keys;
     }
 }
 
