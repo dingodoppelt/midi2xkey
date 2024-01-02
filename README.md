@@ -53,5 +53,5 @@ You don't have to release the key because program change triggers a single keytr
 4. Change to the window you want the events to be sent to and start working your MIDI controllers
 
 ## Acknowledgements
-Heavily inspired by [erazer/Midi2X11key](https://github.com/erazer1/Midi2X11key)
+Heavily inspired by [erazer/Midi2X11key](https://github.com/erazer1/Midi2X11key)  
 Boilerplate code and debugging by chatGPT
