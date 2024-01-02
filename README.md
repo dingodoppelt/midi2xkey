@@ -51,3 +51,7 @@ You don't have to release the key because program change triggers a single keytr
 2. Run `midi2xkey`
 3. Connect any MIDI controller to the client using your favourite JACK tool (carla, catia, qjackctl, jack_connect, jack-matchmaker, helvum, qpwgraph, ...)
 4. Change to the window you want the events to be sent to and start working your MIDI controllers
+
+## Acknowledgements
+Heavily inspired by [erazer/Midi2X11key](https://github.com/erazer1/Midi2X11key)
+Boilerplate code and debugging by chatGPT
